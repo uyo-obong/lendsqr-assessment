@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
 
 
@@ -33,5 +33,11 @@ export class TransactionEntity {
 
   @Column({default: TransactionStatus.inFlow})
   status: TransactionStatus
+
+  @CreateDateColumn({ default: () => 'CURRENT_TIMESTAMP(6)' })
+  created: Date;
+
+  @UpdateDateColumn({ default: () => 'CURRENT_TIMESTAMP(6)' })
+  updated: Date;
 
 }

@@ -19,8 +19,8 @@ export class UserEntity {
   @Column({default: false})
   is_verify: boolean
 
-  @Column({ default: null })
-  wallet: string
+  @Column({ default: 0 })
+  wallet: number
 
   @Column({ default: null })
   phone_number: string;

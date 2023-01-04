@@ -19,6 +19,11 @@ const configuration = {
     username: process.env.DATABASE_USERNAME,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME,
+  },
+  payment: {
+    secret_key: process.env.PAYSTACK_SECRET,
+    public_key: process.env.PAYSTACK_PUBLIC,
+    base_url: process.env.PAYSTACK_BASEURL || 'https://api.paystack.co',
   }
 };
 

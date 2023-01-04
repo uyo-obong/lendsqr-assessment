@@ -3,7 +3,6 @@ import express, { Application } from 'express';
 import config from './app/config/config';
 import Routes from './app/routes';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import response from './app/lib/response';
 
 import { container } from 'tsyringe';
