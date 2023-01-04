@@ -27,6 +27,11 @@ class WalletController extends RestController {
     res.ok(await this.collection(trans, new TransactionTransformer()))
   }
 
+  transfer = async (req: IRequest, res: IResponse) => {
+    const trans = await this.walletService.transfer(req, res);
+    res.ok(null, 'Your transaction has been recorded')
+  }
+
 }
 
 export default WalletController;

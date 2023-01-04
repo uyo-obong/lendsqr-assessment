@@ -62,8 +62,7 @@ export class UserService {
 
 
   public info = async (req: IRequest, res: IResponse) => {
-    const {id} = req.user
-    return DataSource.getRepository(UserEntity).findOne({where: {id}})
+    return DataSource.getRepository(UserEntity).findOne({where: {id: req.user.user}})
   }
 
 

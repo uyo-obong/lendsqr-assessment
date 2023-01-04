@@ -11,5 +11,6 @@ const walletValidator: any = container.resolve(WalletValidator);
 WalletRouter.post('/fund', auth, walletValidator.fund, Wallet.fund);
 WalletRouter.post('/withdraw', auth, Wallet.withdraw);
 WalletRouter.get('/transactions', auth, Wallet.transaction);
+WalletRouter.post('/transfer', auth, walletValidator.transfer, Wallet.transfer);
 
 export default WalletRouter;

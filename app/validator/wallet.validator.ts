@@ -34,6 +34,36 @@ class WalletValidator {
       },
     })
   );
+
+
+  // Transfer
+
+  transfer = validate(
+    checkSchema({
+      amount: {
+        in: ['body'],
+        notEmpty: {
+          errorMessage: 'amount is required',
+        },
+        trim: true,
+      },
+      account_id: {
+        in: ['body'],
+        isString: {
+          errorMessage: 'Account Id is required',
+        },
+        trim: true,
+        custom: {
+          options: async (value) => {
+            const user = await DataSource.getRepository(UserEntity).findOne({ where: {account_id: value} });
+            if (!user) {
+              throw new Error('Account Id does not exist');
+            }
+          }
+        },
+      },
+    })
+  );
 }
 
 export default WalletValidator;

@@ -124,7 +124,6 @@ export class WalletService {
       user.wallet -= request.amount;
       await queryRunner.manager.save(user);
 
-
       const ref = crypto.randomBytes(20).toString('hex');
 
       // This line handle the fund transaction using flutterwave
@@ -190,6 +189,55 @@ export class WalletService {
 
 
   /**
+   * The method is used to transfer money from one account to another
+   * @param req
+   * @param res
+   */
+  public transfer = async (req: IRequest, res: IResponse) => {
+
+    // Initialized db transaction
+    const queryRunner = DataSource.createQueryRunner();
+
+    // Start transaction
+    await queryRunner.startTransaction();
+
+    try {
+      const sender = await this.user(req)
+      const request = req.body
+
+      // Validate the money in sender's wallet
+      if (sender.wallet <= request.amount) {
+        await queryRunner.rollbackTransaction();
+        return res.badRequest(undefined, 'Insufficient balance');
+      }
+
+      const receiver = await DataSource.getRepository(UserEntity).findOne({where: {account_id: request.account_id}})
+
+      if (receiver.account_id === sender.account_id) {
+        await queryRunner.rollbackTransaction();
+        return res.badRequest(undefined, 'You can not send money to your self');
+      }
+
+      // Remove the money from sender's wallet
+      sender.wallet -= request.amount;
+      await queryRunner.manager.save(sender);
+
+      // Add the money to receiver's wallet
+      receiver.wallet += request.amount
+      await queryRunner.manager.save(receiver);
+
+      await queryRunner.commitTransaction();
+      return true
+    } catch (err) {
+
+      await queryRunner.rollbackTransaction();
+      return res.badRequest(undefined, err.message);
+    }
+
+  }
+
+
+  /**
    * The method is used to log all the transactions that happen in the system
    * @param amount
    * @param reference
@@ -219,8 +267,7 @@ export class WalletService {
    * @param req
    */
   private user = async (req) => {
-    const { id } = req.user;
-    return DataSource.getRepository(UserEntity).findOne({ where: { id } });
+    return DataSource.getRepository(UserEntity).findOne({ where: { id: req.user.user } });
   };
 
 }
