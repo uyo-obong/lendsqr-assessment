@@ -45,7 +45,7 @@ export class WalletService {
           return response;
         })
         .catch((err) => {
-          return err
+          return err;
         });
 
       if (response.status === 'error') {
@@ -58,22 +58,12 @@ export class WalletService {
         && response.data.amount >= request.amount
         && response.data.currency === 'NGN') {
 
-        const logTransaction = {
-          amount: response.data.amount,
-          reference: request.transaction_id,
-          user: user,
-          status: 'inFlow',
-          description: 'Fund wallet',
-          from: '',
-          to: user.id
-        };
-
         // Get a user details and try to update the wallet amount
         user.wallet += response.data.amount;
         await queryRunner.manager.save(user);
 
         // Log every transaction that happen
-        const trans = await this.logTransaction(logTransaction);
+        const trans = await this.logTransaction(response.data.amount, request.transaction_id, user, 'inFlow', 'Deposit', '', user.id);
         await queryRunner.manager.save(trans);
 
         await queryRunner.commitTransaction();
@@ -134,18 +124,8 @@ export class WalletService {
         return res.badRequest(undefined, data.message);
       }
 
-      const logTransaction = {
-        amount: request.amount,
-        reference: ref,
-        user: user,
-        status: 'outFlow',
-        description: 'Withdraw from wallet',
-        from: '',
-        to: user.id
-      };
-
       // Log every transaction that happen
-      const trans = await this.logTransaction(logTransaction);
+      const trans = await this.logTransaction(request.amount, ref, user, 'outFlow', 'Withdraw', '', user.id);
       await queryRunner.manager.save(trans);
 
       await queryRunner.commitTransaction();
@@ -158,11 +138,26 @@ export class WalletService {
   };
 
 
+  /**
+   * The method fetch all transactions details
+   * @param req
+   * @param res
+   */
   public transaction = async (req: IRequest, res: IResponse) => {
     const { id } = req.user;
-    return await DataSource.getRepository(TransactionEntity).find({ where: { user: { id } }, order: { created: 'desc'} });
+    return await DataSource.getRepository(TransactionEntity).find({
+      where: { user: { id } },
+      order: { created: 'desc' }
+    });
   };
 
+  /**
+   * The method is used to initialize bank transfer using flutterwave
+   * @param request
+   * @param ref
+   * @param publicKey
+   * @param secretKey
+   */
   private initiateTransfer = async (request, ref, publicKey, secretKey) => {
     const flw = new Flutterwave(publicKey, secretKey);
 
@@ -202,8 +197,8 @@ export class WalletService {
     await queryRunner.startTransaction();
 
     try {
-      const sender = await this.user(req)
-      const request = req.body
+      const sender = await this.user(req);
+      const request = req.body;
 
       // Validate the money in sender's wallet
       if (sender.wallet <= request.amount) {
@@ -211,30 +206,55 @@ export class WalletService {
         return res.badRequest(undefined, 'Insufficient balance');
       }
 
-      const receiver = await DataSource.getRepository(UserEntity).findOne({where: {account_id: request.account_id}})
+      const receiver = await DataSource.getRepository(UserEntity).findOne({ where: { account_id: request.account_id } });
 
       if (receiver.account_id === sender.account_id) {
         await queryRunner.rollbackTransaction();
         return res.badRequest(undefined, 'You can not send money to your self');
       }
 
+      const ref = crypto.randomBytes(20).toString('hex');
+
       // Remove the money from sender's wallet
       sender.wallet -= request.amount;
+      const senderLog = await this.logTransaction(request.amount, ref, sender, 'outFlow', 'Transfer', sender.id, receiver.id);
       await queryRunner.manager.save(sender);
+      await queryRunner.manager.save(senderLog);
+
 
       // Add the money to receiver's wallet
-      receiver.wallet += request.amount
+      receiver.wallet += request.amount;
+      const receiverLog = await this.logTransaction(request.amount, ref, receiver, 'inFlow', 'Transfer', sender.id, receiver.id);
       await queryRunner.manager.save(receiver);
+      await queryRunner.manager.save(receiverLog);
+
 
       await queryRunner.commitTransaction();
-      return true
+      return true;
     } catch (err) {
 
       await queryRunner.rollbackTransaction();
       return res.badRequest(undefined, err.message);
     }
 
-  }
+  };
+
+  // private transactionLog = async (request, user, status, description, from, to) => {
+  //   const ref = crypto.randomBytes(15).toString('hex');
+  //
+  //   const logTransaction = {
+  //     amount: request.amount,
+  //     reference: ref,
+  //     user: user,
+  //     status: status,
+  //     description: description,
+  //     from: from,
+  //     to: to
+  //   };
+  //
+  //   // Log every transaction that happen
+  //   return await this.logTransaction(logTransaction);
+  // }
 
 
   /**
@@ -247,7 +267,7 @@ export class WalletService {
    * @param from
    * @param to
    */
-  private logTransaction = async ({ amount, reference, user, status, description, from, to }) => {
+  private logTransaction = async (amount, reference, user, status, description, from, to) => {
     const context = {
       amount,
       ref: reference,
