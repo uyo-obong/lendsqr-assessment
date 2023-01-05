@@ -144,9 +144,8 @@ export class WalletService {
    * @param res
    */
   public transaction = async (req: IRequest, res: IResponse) => {
-    const { id } = req.user;
     return await DataSource.getRepository(TransactionEntity).find({
-      where: { user: { id } },
+      where: { user: { id: req.user.user } },
       order: { created: 'desc' }
     });
   };
@@ -216,14 +215,14 @@ export class WalletService {
       const ref = crypto.randomBytes(20).toString('hex');
 
       // Remove the money from sender's wallet
-      sender.wallet -= request.amount;
+      sender.wallet -= parseInt(request.amount);
       const senderLog = await this.logTransaction(request.amount, ref, sender, 'outFlow', 'Transfer', sender.id, receiver.id);
       await queryRunner.manager.save(sender);
       await queryRunner.manager.save(senderLog);
 
 
       // Add the money to receiver's wallet
-      receiver.wallet += request.amount;
+      receiver.wallet += parseInt(request.amount);
       const receiverLog = await this.logTransaction(request.amount, ref, receiver, 'inFlow', 'Transfer', sender.id, receiver.id);
       await queryRunner.manager.save(receiver);
       await queryRunner.manager.save(receiverLog);
