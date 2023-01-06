@@ -33,11 +33,16 @@ export class UserService {
 
 
   public login = async (req: IRequest, res: IResponse) => {
+    console.log(req.body)
     try {
       const { email, password } = req.body;
 
       // Validate if user exist in our database
       const user = await DataSource.getRepository(UserEntity).findOne({ where: {email} });
+
+      if (!user) {
+        return res.badRequest(undefined, "Invalid Credentials")
+      }
 
       if (user && (await bcrypt.compare(password, user.password))) {
         const token = jwt.sign(
