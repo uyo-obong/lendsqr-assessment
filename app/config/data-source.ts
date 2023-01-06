@@ -5,7 +5,7 @@ import configuration from './config';
 export const DataSource = new Source(
   {
     type: 'mysql',
-    host: 'localhost',
+    host: configuration.database.host,
     port: 3306,
     username: configuration.database.username,
     password: configuration.database.password,
