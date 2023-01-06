@@ -1,5 +1,5 @@
 {
-  "name": "Lendsqr API",
+  "name": "lendsqr",
   "version": "1.0.0",
   "description": "Lendsqr API",
   "main": "dist/server.js",
