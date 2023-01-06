@@ -12,8 +12,8 @@ export const DataSource = new Source(
     database: configuration.database.database,
     synchronize: true,
     logging: true,
-    entities: ['app/entities/*.{ts,js}'],
-    migrations: ['app/entities/migrations/*.{ts,js}'],
+    entities: ['dist/app/entities/*.{ts,js}'],
+    migrations: ['dist/app/entities/migrations/*.{ts,js}'],
     subscribers: []
   }
 );
