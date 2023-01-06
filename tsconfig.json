@@ -7,10 +7,4 @@
     "module": "commonjs",
     "outDir": "dist"
   },
-  "include" : [
-    "app/**/*.ts"
-  ],
-  "exclude" : [
-    "node_modules"
-  ]
 }
